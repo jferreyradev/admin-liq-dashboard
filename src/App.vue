@@ -1,7 +1,13 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { RouterLink, RouterView } from 'vue-router'
-import { HomeIcon, InformationCircleIcon, Bars3Icon } from '@heroicons/vue/24/outline'
+import {
+  HomeIcon,
+  InformationCircleIcon,
+  Bars3Icon,
+  ServerStackIcon,
+  GlobeAltIcon
+} from '@heroicons/vue/24/outline'
 import LoginForm from './components/LoginForm.vue'
 import { useAuthUser } from './composables/useAuthUser'
 import { useFetchCache } from './composables/useFetchCache'
@@ -11,6 +17,9 @@ const showSidebar = ref(false)
 const isDesktop = ref(window.innerWidth >= 1024)
 const { user, clearUser } = useAuthUser()
 const { clearAll } = useFetchCache()
+
+// Nuevo: controlar submenú de Servicios
+const showServicesSubmenu = ref(false)
 
 function handleLogin() {
   isAuthenticated.value = true
@@ -25,6 +34,10 @@ function logout() {
 
 function toggleSidebar() {
   showSidebar.value = !showSidebar.value
+}
+
+function toggleServicesSubmenu() {
+  showServicesSubmenu.value = !showServicesSubmenu.value
 }
 
 // Detecta tamaño de pantalla para mostrar/ocultar sidebar
@@ -70,13 +83,42 @@ onUnmounted(() => {
           <RouterLink class="btn btn-ghost justify-start" to="/" @click="showSidebar = false">
             <HomeIcon class="w-5 h-5 mr-2" />Inicio
           </RouterLink>
-          <RouterLink
-            class="btn btn-ghost justify-start"
-            to="/services"
-            @click="showSidebar = false"
-          >
-            <InformationCircleIcon class="w-5 h-5 mr-2" />Servicios
-          </RouterLink>
+          <!-- Servicios con submenú -->
+          <div>
+            <button
+              class="btn btn-ghost justify-start w-full flex items-center"
+              @click="toggleServicesSubmenu"
+              :aria-expanded="showServicesSubmenu"
+            >
+              <ServerStackIcon class="w-5 h-5 mr-2" />Servicios
+              <svg :class="{'rotate-90': showServicesSubmenu}" class="ml-auto w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+            <transition name="fade">
+              <div
+                v-if="showServicesSubmenu"
+                class="pl-8 flex flex-col gap-1"
+              >
+                <RouterLink
+                  class="btn btn-xs btn-ghost justify-start text-left px-2 py-2 hover:bg-primary hover:text-primary-content rounded transition"
+                  active-class="bg-primary text-primary-content"
+                  to="/publicip"
+                  @click="showSidebar = false; showServicesSubmenu = false"
+                >
+                  <GlobeAltIcon class="w-4 h-4 mr-2 inline" />Ip
+                </RouterLink>
+                <RouterLink
+                  class="btn btn-xs btn-ghost justify-start text-left px-2 py-2 hover:bg-primary hover:text-primary-content rounded transition"
+                  active-class="bg-primary text-primary-content"
+                  to="/servconn"
+                  @click="showSidebar = false; showServicesSubmenu = false"
+                >
+                  <InformationCircleIcon class="w-4 h-4 mr-2 inline" />Conexiones
+                </RouterLink>
+              </div>
+            </transition>
+          </div>
           <RouterLink class="btn btn-ghost justify-start" to="/about" @click="showSidebar = false">
             <InformationCircleIcon class="w-5 h-5 mr-2" />Acerca
           </RouterLink>
@@ -105,5 +147,18 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.2s;
+}
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
+}
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(-8px);}
+  to { opacity: 1; transform: translateY(0);}
+}
+.animate-fade-in {
+  animation: fade-in 0.2s;
+}
 /* No necesitas media queries personalizados, Tailwind lo hace */
 </style>

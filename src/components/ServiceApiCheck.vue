@@ -1,29 +1,40 @@
 <script setup>
 import LoadingSpinner from './LoadingSpinner.vue'
-import { useFetchCache } from '../composables/useFetchCache'
-import { ref, computed } from 'vue'
+import { ref, watch } from 'vue'
 import { useEndPoints } from '../composables/useEndPoint'
+import { useFetchWatch } from '../composables/useFetchWatch.js'
+import { CheckCircleIcon, ArrowPathIcon } from '@heroicons/vue/24/outline'
 
-const ep = ref(null)
+const urlval = ref()
+const { data, error, loading } = useFetchWatch(() => urlval.value)
+const { setActive, endPointsKeys, getEndPointByKey } = useEndPoints()
 
-const { data, error, loading, reload } = useFetchCache('endpoints', url.value)
+const testing = ref({}) // Estado de prueba por endpoint
+const tested = ref({}) // Estado de éxito por endpoint
 
-const url = ref(null)
-
-const { endPoints } = useEndPoints()
-
-function handleCheck() {
-  for (const endpoint of endPoints) {
-    if (endpoint.base) {
-      url.value = endpoint.base
-      console.log('Base URL:', url.value)
+async function testConn(k) {
+  testing.value[k] = true
+  tested.value[k] = false
+  urlval.value = getEndPointByKey(k).base + '/api/view/configServer'
+  setActive(getEndPointByKey(k))
+  try {
+    // Espera a que loading sea false (cuando useFetchWatch termina)
+    await new Promise((resolve) => {
+      const stop = watch(loading, (val) => {
+        if (!val) {
+          stop()
+          resolve()
+        }
+      })
+    })
+    if (!error.value) {
+      tested.value[k] = true
     }
-    if (endpoint.boletas) {
-      //endpoint.boletas = endpoint.boletas
-    }
-    if (endpoint.spEp) {
-      //endpoint.sp = endpoint.sp
-    }
+  } finally {
+    testing.value[k] = false
+    setTimeout(() => {
+      tested.value[k] = false
+    }, 2000) // Oculta el check después de 2s
   }
 }
 </script>
@@ -36,29 +47,57 @@ function handleCheck() {
         Revisar
       </button>
     </div>
-    <LoadingSpinner v-if="loading" />
-    <ul v-else class="space-y-4">
+
+    <ul class="space-y-4">
       <li
-        v-for="ep in endPoints"
-        :key="ep.url"
+        v-for="k of endPointsKeys"
+        :key="k"
         class="bg-base-100 rounded-lg shadow p-4 flex flex-col md:flex-row md:items-center md:justify-between"
       >
         <div>
-          <div class="font-semibold text-base">{{ ep.titulo }}</div>
-          <div class="text-xs text-base-content/60 break-all">Base: {{ ep.base }}</div>
-          <div class="text-xs text-base-content/60 break-all">Boletas: {{ ep.boletas }}</div>
-          <div class="text-xs text-base-content/60 break-all">SP: {{ ep.sp }}</div>
+          <div class="font-semibold text-base">
+            {{ getEndPointByKey(k).titulo }}
+            <button class="btn btn-xs btn-outline" @click="testConn(k)">
+              Probar
+              <div v-if="testing[k]" class="loader-icon">
+                <ArrowPathIcon class="animate-spin h-5 w-5" />
+              </div>
+              <div v-if="tested[k]" class="text-success"><CheckCircleIcon class="h-5 w-5" /></div>
+            </button>
+          </div>
+
+          <div class="text-xs text-base-content/60 break-all">
+            Base: {{ getEndPointByKey(k).base }}
+          </div>
+          <div class="text-xs text-base-content/60 break-all">
+            Boletas: {{ getEndPointByKey(k).boletas }}
+          </div>
+          <div class="text-xs text-base-content/60 break-all">SP: {{ getEndPointByKey(k).sp }}</div>
         </div>
         <div class="mt-2 md:mt-0 flex flex-wrap gap-2">
-          <span v-if="ep.baseEp" class="badge badge-outline">Base: {{ ep.baseEp }}</span>
-          <span v-if="ep.boletasEp" class="badge badge-outline">Boletas: {{ ep.boletasEp }}</span>
-          <span v-if="ep.spEp" class="badge badge-outline">SP: {{ ep.spEp }}</span>
+          <span v-if="getEndPointByKey(k).baseEp" class="badge badge-outline"
+            >Base: {{ getEndPointByKey(k).baseEp }}</span
+          >
+          <span v-if="getEndPointByKey(k).boletasEp" class="badge badge-outline"
+            >Boletas: {{ getEndPointByKey(k).boletasEp }}</span
+          >
+          <span v-if="getEndPointByKey(k).spEp" class="badge badge-outline"
+            >SP: {{ getEndPointByKey(k).spEp }}</span
+          >
         </div>
-      </li>
-      <li v-if="!endPoints || endPoints.length === 0" class="text-center text-base-content/60">
-        No hay endpoints disponibles.
       </li>
     </ul>
     <div v-if="error" class="text-error mt-4">{{ error.message }}</div>
+    <div v-if="data" class="text-success mt-4">Conexión exitosa a: {{ data }}</div>
   </div>
 </template>
+
+<style>
+.loader-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+</style>

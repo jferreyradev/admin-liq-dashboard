@@ -18,13 +18,21 @@ const router = createRouter({
       component: () => import('../views/AboutView.vue'),
     },
     {
-      path: '/services',
-      name: 'services',
+      path: '/publicip',
+      name: 'Ip Sevices',
       // route level code-splitting
       // this generates a separate chunk (About.[hash].js) for this route
       // which is lazy-loaded when the route is visited.
       component: () => import('../views/ServicesView.vue'),
     },
+    {
+      path: '/servconn',
+      name: 'Connection Services',
+      // route level code-splitting
+      // this generates a separate chunk (About.[hash].js) for this route
+      // which is lazy-loaded when the route is visited.
+      component: () => import('../views/ServicesEPView.vue'),
+    }
   ],
 })
 
