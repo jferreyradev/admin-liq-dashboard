@@ -1,31 +1,46 @@
 <script setup>
 import { computed, ref, nextTick, watch } from 'vue'
-import { useFetchCache } from '../composables/useFetchCache'
-import { useEndPoint } from '../composables/useEndPoint'
-const { getEndPointByKey, apiBase } = useEndPoint()
+
+const props = defineProps({
+  json: { type: Object, default: () => ({}) }
+})
 
 const search = ref('')
 const searchInput = ref(null)
 const preRef = ref(null)
-const { data, loading, error, reload } = useFetchCache(
-  'json-demo',
-  apiBase.value +'/api/view/list'
+
+// Computed para las claves del JSON recibido
+const jsonKeys = computed(() => {
+  if (!props.json || typeof props.json !== 'object') return []
+  return Object.keys(props.json)
+})
+
+const selectedJsonKey = ref('')
+
+watch(
+  () => props.json,
+  () => {
+    selectedJsonKey.value = jsonKeys.value[0] || ''
+  },
+  { immediate: true }
 )
 
 const formattedJson = computed(() => {
-  if (!data.value) return ''
-  let jsonStr = JSON.stringify(data.value, null, 2)
+  if (!props.json) return ''
+  let jsonStr = ''
+  if (selectedJsonKey.value && props.json[selectedJsonKey.value] !== undefined) {
+    jsonStr = JSON.stringify(props.json[selectedJsonKey.value], null, 2)
+  } else {
+    jsonStr = JSON.stringify(props.json, null, 2)
+  }
   if (search.value) {
-    // Escapa caracteres especiales para RegExp
     const escaped = search.value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
     const regex = new RegExp(escaped, 'gi')
-    // Resalta coincidencias usando <mark>
     jsonStr = jsonStr.replace(regex, match => `<mark>${match}</mark>`)
   }
   return jsonStr
 })
 
-// Hace scroll al primer resultado encontrado
 watch([formattedJson, search], async () => {
   await nextTick()
   if (preRef.value && search.value) {
@@ -36,7 +51,6 @@ watch([formattedJson, search], async () => {
   }
 })
 
-// Selecciona el texto solo cuando el usuario presiona Enter
 function selectInput() {
   nextTick(() => {
     if (searchInput.value) searchInput.value.select()
@@ -47,6 +61,12 @@ function selectInput() {
 <template>
   <div>
     <div class="flex items-center gap-2 mb-2">
+      <select v-model="selectedJsonKey" class="select select-sm select-bordered" v-if="jsonKeys.length">
+        <option value="">Todos</option>
+        <option v-for="k in jsonKeys" :key="k" :value="k">
+          {{ k }}
+        </option>
+      </select>
       <input
         ref="searchInput"
         v-model="search"
@@ -55,13 +75,9 @@ function selectInput() {
         class="input input-sm input-bordered"
         @keyup.enter="selectInput"
       />
-      <button class="btn btn-sm btn-outline" @click="reload">Recargar</button>
     </div>
-    <div v-if="loading">Cargando...</div>
-    <div v-else-if="error" class="text-red-600">Error: {{ error.message }}</div>
     <pre
       ref="preRef"
-      v-else
       class="p-4 rounded overflow-auto text-xs"
       v-html="formattedJson"
       style="max-height: 60vh;"

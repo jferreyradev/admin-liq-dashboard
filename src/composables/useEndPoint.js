@@ -1,9 +1,4 @@
 import { ref, computed } from 'vue'
-//import endPoints from '../endPoints.json'
-
-const apiBoletas = ref()
-const apiBase = ref()
-const apiSp = ref()
 
 const publicIp = ref({url: 'https://josrferreyr-apiserverde-79.deno.dev/items'})
 
@@ -55,15 +50,8 @@ export function useEndPoint() {
       console.warn('No default endpoint found')
       return
     }
-
-    apiBase.value = ep.base
-    apiBoletas.value = ep.boletas
-    apiSp.value = ep.sp
   }
   return {
-    apiBase,
-    apiBoletas,
-    apiSp,
     setActive,
     setEndPoints,
     activeEndPoint,

@@ -9,6 +9,7 @@ import {
   GlobeAltIcon
 } from '@heroicons/vue/24/outline'
 import LoginForm from './components/LoginForm.vue'
+import EndpointSelector from './components/EndpointSelector.vue'
 import { useAuthUser } from './composables/useAuthUser'
 import { useFetchCache } from './composables/useFetchCache'
 import { useEndPoint } from './composables/useEndPoint'
@@ -22,7 +23,7 @@ const { clearAll } = useFetchCache()
 const showServicesSubmenu = ref(false)
 
 // Endpoints desde el composable
-const { activeEndPoint, setActive, endPointsKeys, getEndPointByKey } = useEndPoint()
+const { activeEndPoint, setActive, getEndPointByKey } = useEndPoint()
 const selectedEndpoint = ref(activeEndPoint.value)
 
 function handleEndpointChange() {
@@ -80,19 +81,7 @@ onUnmounted(() => {
 
       <div class="flex-none px-4 flex items-center gap-2">
         <!-- Selector de endpoint -->
-        <select
-          v-model="selectedEndpoint"
-          class="select select-sm select-bordered"
-          @change="handleEndpointChange()"
-        >
-          <option
-            v-for="k in endPointsKeys"
-            :key="k"
-            :value="k"
-          >
-            {{ k }}
-          </option>
-        </select>
+        <EndpointSelector />
         <span class="text-sm mr-4 hidden sm:inline">{{ user }}</span>
         <button class="btn btn-sm btn-primary" @click="logout">Salir</button>
       </div>
