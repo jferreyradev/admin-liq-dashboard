@@ -11,6 +11,7 @@ import {
 import LoginForm from './components/LoginForm.vue'
 import { useAuthUser } from './composables/useAuthUser'
 import { useFetchCache } from './composables/useFetchCache'
+import { useEndPoint } from './composables/useEndPoint'
 
 const isAuthenticated = ref(false)
 const showSidebar = ref(false)
@@ -18,8 +19,17 @@ const isDesktop = ref(window.innerWidth >= 1024)
 const { user, clearUser } = useAuthUser()
 const { clearAll } = useFetchCache()
 
-// Nuevo: controlar submenú de Servicios
 const showServicesSubmenu = ref(false)
+
+// Endpoints desde el composable
+const { activeEndPoint, setActive, endPointsKeys, getEndPointByKey } = useEndPoint()
+const selectedEndpoint = ref(activeEndPoint.value)
+
+function handleEndpointChange() {
+  setActive(getEndPointByKey(selectedEndpoint.value));
+  console.log(`Endpoint cambiado a: ${selectedEndpoint.value}`);
+  console.log(`Base URL: ${getEndPointByKey(String(selectedEndpoint.value))}`);
+}
 
 function handleLogin() {
   isAuthenticated.value = true
@@ -29,7 +39,7 @@ function logout() {
   isAuthenticated.value = false
   clearUser()
   showSidebar.value = false
-  clearAll() // Limpiar caché al cerrar sesión
+  clearAll()
 }
 
 function toggleSidebar() {
@@ -40,7 +50,6 @@ function toggleServicesSubmenu() {
   showServicesSubmenu.value = !showServicesSubmenu.value
 }
 
-// Detecta tamaño de pantalla para mostrar/ocultar sidebar
 function handleResize() {
   isDesktop.value = window.innerWidth >= 1024
   if (isDesktop.value) showSidebar.value = false
@@ -68,7 +77,22 @@ onUnmounted(() => {
         <HomeIcon class="w-6 h-6" />
         <span class="font-bold hidden sm:inline">Panel principal</span>
       </div>
-      <div class="flex-none px-4">
+
+      <div class="flex-none px-4 flex items-center gap-2">
+        <!-- Selector de endpoint -->
+        <select
+          v-model="selectedEndpoint"
+          class="select select-sm select-bordered"
+          @change="handleEndpointChange()"
+        >
+          <option
+            v-for="k in endPointsKeys"
+            :key="k"
+            :value="k"
+          >
+            {{ k }}
+          </option>
+        </select>
         <span class="text-sm mr-4 hidden sm:inline">{{ user }}</span>
         <button class="btn btn-sm btn-primary" @click="logout">Salir</button>
       </div>
@@ -119,6 +143,9 @@ onUnmounted(() => {
               </div>
             </transition>
           </div>
+          <RouterLink class="btn btn-ghost justify-start" to="/servjson" @click="showSidebar = false">
+           Conf API
+          </RouterLink>
           <RouterLink class="btn btn-ghost justify-start" to="/about" @click="showSidebar = false">
             <InformationCircleIcon class="w-5 h-5 mr-2" />Acerca
           </RouterLink>

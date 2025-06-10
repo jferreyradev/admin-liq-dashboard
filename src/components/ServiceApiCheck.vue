@@ -1,13 +1,13 @@
 <script setup>
 import LoadingSpinner from './LoadingSpinner.vue'
 import { ref, watch } from 'vue'
-import { useEndPoints } from '../composables/useEndPoint'
+import { useEndPoint } from '../composables/useEndPoint'
 import { useFetchWatch } from '../composables/useFetchWatch.js'
 import { CheckCircleIcon, ArrowPathIcon } from '@heroicons/vue/24/outline'
 
 const urlval = ref()
 const { data, error, loading } = useFetchWatch(() => urlval.value)
-const { setActive, endPointsKeys, getEndPointByKey } = useEndPoints()
+const { setActive, endPointsKeys, getEndPointByKey } = useEndPoint()
 
 const testing = ref({}) // Estado de prueba por endpoint
 const tested = ref({}) // Estado de éxito por endpoint

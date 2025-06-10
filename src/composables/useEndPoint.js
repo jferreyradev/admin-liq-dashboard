@@ -36,7 +36,7 @@ const endPoints = ref({
 
 const activeEndPoint = ref()
 
-export function useEndPoints() {
+export function useEndPoint() {
 
   const endPointsKeys = computed(() => Object.keys(endPoints.value))
   const endPointsValues = computed(() => Object.values(endPoints.value))
